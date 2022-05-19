@@ -23,7 +23,7 @@ namespace FinTOKMAK.GridSystem.Square.Generator
         public static Dictionary<int, SquareGridGenerator> Instances = new Dictionary<int, SquareGridGenerator>();
 
         /// <summary>
-        /// The next generated GridGenerator ID
+        /// The global static next generated GridGenerator ID
         /// </summary>
         public static int nextGenerateID;
 
@@ -39,6 +39,11 @@ namespace FinTOKMAK.GridSystem.Square.Generator
         #endregion
         
         #region Private Field
+
+        /// <summary>
+        /// If the current generator is in editor mode.
+        /// </summary>
+        private bool _editorMode;
 
         /// <summary>
         /// The unique ID of current GridGenerator
@@ -74,6 +79,8 @@ namespace FinTOKMAK.GridSystem.Square.Generator
         #endregion
 
         #region Public Field
+
+        public bool editorMode => _editorMode;
 
         /// <summary>
         /// the unique ID of the GridGenerator
@@ -186,6 +193,14 @@ namespace FinTOKMAK.GridSystem.Square.Generator
             finishInitialize?.Invoke();
         }
 
+        #region Private Methods
+        
+        
+
+        #endregion
+
+        #region Public Methods
+
         /// <summary>
         /// The initialize method for editor scripts
         /// </summary>
@@ -199,13 +214,27 @@ namespace FinTOKMAK.GridSystem.Square.Generator
                 Instances.Add(_generatorID, this);
             }
             
-            // initialize the grid system
+            // Initialize the grid system.
             _squareGridSystem = new SquareGridSystem<GridDataContainer>(_generatorID, globalOffset);
+            // Initialize grid element coordinate map.
+            _gridElements = new Dictionary<GridCoordinate, GridElement>();
+
+            _editorMode = true;
         }
-
-        #region Private Methods
-
         
+        /// <summary>
+        /// Callback function when close the editing mode.
+        /// </summary>
+        public void EditorTearDown()
+        {
+            // Remove the generator instance.
+            Instances.Remove(_generatorID);
+            
+            // Tear down grid system.
+            _squareGridSystem = null;
+
+            _editorMode = false;
+        }
 
         #endregion
 
@@ -214,6 +243,9 @@ namespace FinTOKMAK.GridSystem.Square.Generator
         public void GenerateMap<ElementType> (int width, int height, float cost, GridGenerationDirection direction) 
             where ElementType: GridElement
         {
+            // Clear the coordinate to grid element map
+            _gridElements.Clear();
+            
             // traverse all the grid
             for (int y = 0; y < height; y++)
             {
@@ -288,6 +320,9 @@ namespace FinTOKMAK.GridSystem.Square.Generator
         public void GenerateMap<ElementType>(string filePath, GridGenerationDirection direction) 
             where ElementType : GridElement
         {
+            // Clear the coordinate to grid element map
+            _gridElements.Clear();
+            
             // get the list of VertexData
             List<VertexData<GridDataContainer>> vertexDatas = VertexSerializer.Deserialize<GridDataContainer>(filePath);
             // add Vertices
